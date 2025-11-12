@@ -15,7 +15,7 @@ def Get_text_from_PDFfiles_usingPyPDF2(in_PdfFile):
         messagebox.showerror("Erro", f"Erro ao ler o PDF: {e}")
         return ""
 
-def obter_feriados(ano="2025"):
+def obter_feriados(ano):
     url = f"https://date.nager.at/api/v3/PublicHolidays/{ano}/BR"
     headers = {
         'accept': 'application/json',
@@ -25,10 +25,9 @@ def obter_feriados(ano="2025"):
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         dados = response.json()
-        feriados = {f["date"]: f["localName"] for f in dados}
-        return feriados
+        return {f["date"]: f["localName"] for f in dados}
     except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao buscar feriados: {e}")
+        messagebox.showerror("Erro", f"Erro ao buscar feriados de {ano}: {e}")
         return {}
 
 def verificar_datas():
@@ -58,11 +57,15 @@ def verificar_datas():
                 dia = dia.zfill(2)
                 mes = mes.zfill(2)
                 datas_formatadas.append(f"{ano}-{mes}-{dia}")
-    feriados = obter_feriados("2025")
+    anos_encontrados = sorted(set(d.split("-")[0] for d in datas_formatadas))
     resultado_texto = ""
+    todos_feriados = {}
+    for ano in anos_encontrados:
+        feriados_ano = obter_feriados(ano)
+        todos_feriados.update(feriados_ano)
     for d in datas_formatadas:
-        if d in feriados:
-            resultado_texto += f"{d} → {feriados[d]}\n"
+        if d in todos_feriados:
+            resultado_texto += f"{d} → {todos_feriados[d]}\n"
     if not resultado_texto:
         resultado_texto = "Nenhuma das datas encontradas é feriado."
     resultado_box.delete(1.0, tkinter.END)
